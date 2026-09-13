@@ -1,3 +1,38 @@
 .trait-importer textarea { font-family: var(--font-mono); resize: vertical; }
 .trait-importer .form-group { margin-bottom: 10px; }
 .trait-importer label { font-weight: 700; display: block; margin-bottom: 4px; }
+
+.trait-importer .trait-drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 150px;
+  margin: 12px 0 6px;
+  padding: 18px;
+  border: 2px dashed var(--color-border-light-primary, #777);
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.trait-importer .trait-drop-zone:hover,
+.trait-importer .trait-drop-zone.dragover {
+  border-color: var(--color-border-highlight, #c9a227);
+  background: color-mix(in srgb, var(--color-border-highlight, #c9a227) 10%, transparent);
+}
+
+.trait-importer .trait-drop-zone i { font-size: 2rem; }
+.trait-importer .trait-drop-zone strong { font-size: 1.05rem; }
+.trait-importer .trait-drop-zone span,
+.trait-importer .trait-drop-zone small { opacity: 0.75; }
+.trait-importer .trait-importer-status {
+  min-height: 1.4em;
+  margin-bottom: 12px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+.trait-importer .trait-importer-status[data-state="error"] { font-weight: 700; }
+.trait-importer .trait-importer-status[data-state="success"] { font-weight: 700; }
