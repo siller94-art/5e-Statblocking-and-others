@@ -1,25 +1,28 @@
 # Statblock 5e
 
-A simple, unified Foundry VTT v14 module for importing D&D 5e content without a build step.
+A simple, unified Foundry VTT v14 module for importing D&D 5e content.
 
-## Version 4.0.0
+## Version 4.1.0
 
-### Simple import workflow
-1. Open the **Actor Directory**.
-2. Click **Import 5e Content**.
-3. Choose **Auto-detect** or select exactly what you are importing.
-4. Either click **Paste Clipboard Text**, use normal **Ctrl+V / Cmd+V**, or upload a file.
-5. Click **Import**.
+### Easy importer UI
+- Large **Drop a file here** upload area.
+- **Choose File** button for PDF, TXT, MD, and JSON.
+- Large **Paste Clipboard Text** button.
+- Manual D&D Beyond copy/paste workflow.
+- Live **statblock preview** updates as text is pasted or edited.
+- Preview shows detected content type, monster name, AC, HP, speed, CR, ability scores, detected action categories, attack count, and a collapsible source preview.
+- Auto-detection can still be overridden with the content type selector.
+- Clear and normal Ctrl+V / Cmd+V workflows remain supported.
 
 ### Supported input
-- **Clipboard Text** — copies text already on your clipboard into the importer.
-- **Manual D&D Beyond copy/paste** — copy the entry yourself from D&D Beyond, then paste it into the module.
-- **PDF** — extracts common selectable PDF text streams.
-- **TXT** — plain text files.
-- **MD** — Markdown files.
-- **JSON** — JSON files are read and formatted as source text.
+- Clipboard Text
+- Manual D&D Beyond copy/paste
+- PDF with selectable text
+- TXT
+- MD
+- JSON
 
-Scanned/image-only PDFs do not contain selectable text and need OCR before importing.
+Scanned/image-only PDFs need OCR before importing.
 
 ### Supported content categories
 - Monster / NPC
@@ -37,63 +40,15 @@ Scanned/image-only PDFs do not contain selectable text and need OCR before impor
 - Auto-detect
 
 ### Monster / NPC information
-The importer attempts to preserve and populate common statblock information when it is present, including:
-- Name
-- Size and creature type
-- Alignment
-- Armor Class
-- Hit Points and HP formula
-- Speed
-- Six ability scores
-- Proficiency bonus
-- Challenge Rating
-- Passive Perception
-- Senses
-- Languages
-- Skills
-- Saving throws
-- Damage resistances
-- Damage immunities
-- Condition immunities
-- Spellcasting text
-- Traits
-- Actions
-- Bonus Actions
-- Reactions
-- Legendary Actions
-- Lair Actions
+The importer attempts to preserve and populate common statblock information when present, including name, size, creature type, alignment, AC, HP and formula, speed, six ability scores, proficiency bonus, challenge rating, passive perception, senses, languages, skills, saving throws, resistances, immunities, condition immunities, spellcasting text, traits, actions, bonus actions, reactions, legendary actions, and lair actions.
 
-The complete original source text is also preserved in the imported actor/item description so information that does not map cleanly to a D&D5e field is not lost.
+The complete original source text is preserved in the imported actor/item description so information that does not map cleanly to a D&D5e field is not lost.
 
 ### Weapons and attacks
-Weapons and attacks are separate importer choices.
-
-- **Weapon** creates a D&D5e weapon item.
-- **Attack** creates an NPC actor containing the attack weapon/activity.
-- Monster attacks are recognized separately from normal actions.
-- Attack parsing attempts to capture melee/ranged type, attack bonus, ability, damage dice, damage modifier, damage type, reach, range, and long range.
-- The module attempts to attach a native D&D5e v6 Attack Activity. If the system rejects an activity schema, the weapon item is retained instead of aborting the import.
-
-### Action categories
-Monster entries are separated into their own categories:
-- Traits
-- Actions
-- Bonus Actions
-- Reactions
-- Legendary Actions
-- Lair Actions
-
-Lair actions are specifically created as **Lair Action:** items rather than being mixed into ordinary actions.
+Weapons and attacks are separate importer choices. Monster attacks are recognized separately from ordinary actions. Attack parsing attempts to capture melee/ranged type, attack bonus, ability, damage dice, damage modifier, damage type, reach, range, and long range. The module attempts to attach a native D&D5e v6 Attack Activity while retaining the weapon if the activity schema is rejected.
 
 ### D&D Beyond and website workflow
-This module uses a manual copy/paste workflow. It does not:
-- log in to D&D Beyond or another website;
-- scrape web pages;
-- run bots against websites;
-- bypass access controls;
-- automatically download protected website content.
-
-Copy only material you have permission to use.
+This module uses manual copy/paste. It does not log in to websites, scrape pages, run bots, bypass access controls, or automatically download protected website content. Copy only material you have permission to use.
 
 ## Compatibility
 - Foundry VTT **14.359+ / v14**
