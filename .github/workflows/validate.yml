@@ -1,0 +1,17 @@
+name: Validate Statblock 5e
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate module.json
+        run: node -e "JSON.parse(require('fs').readFileSync('module.json','utf8')); console.log('module.json OK')"
+      - name: Validate JavaScript syntax
+        run: node --check scripts/main-v3.js
+      - name: Check manifest target
+        run: node -e "const m=JSON.parse(require('fs').readFileSync('module.json','utf8')); if(m.esmodules.length!==1 || m.esmodules[0]!=='scripts/main-v3.js') process.exit(1); console.log('manifest target OK')"
