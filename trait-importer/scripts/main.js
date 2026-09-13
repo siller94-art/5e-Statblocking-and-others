@@ -1,5 +1,5 @@
 const MODULE_ID = "trait-importer";
-const VERSION = "1.1.0";
+const VERSION = "1.1.1";
 
 Hooks.once("init", () => console.log(`${MODULE_ID} | Trait Importer ${VERSION} initialized`));
 
@@ -8,7 +8,11 @@ function getActor(actor) {
 }
 
 function categoryLabel(category) {
-  return { attack: "Attack", feature: "Feature / Trait", legendary: "Legendary Action" }[category] || category;
+  return {
+    attack: "Attack",
+    feature: "Feature / Trait",
+    legendary: "Legendary Action"
+  }[category] || category;
 }
 
 function escapeHtml(value) {
@@ -29,10 +33,12 @@ function parseText(text) {
     let name = lines.shift() || "Imported Trait";
     let description = lines.join("<br>");
     const match = name.match(/^(.+?)\.\s+(.+)$/);
+
     if (match) {
       name = match[1];
       description = [match[2], ...lines].join("<br>");
     }
+
     return {
       name,
       type: "feat",
@@ -72,21 +78,29 @@ function unescapePdfString(value) {
 function extractPdfOperators(text) {
   const chunks = [];
   const stringRegex = /\((?:\\.|[^\\)])*\)\s*Tj/g;
+
   for (const match of text.matchAll(stringRegex)) {
-    const raw = match[0].replace(/\)\s*Tj$/, "").replace(/^\(/, "");
+    const raw = match[0]
+      .replace(/\)\s*Tj$/, "")
+      .replace(/^\(/, "");
     chunks.push(unescapePdfString(raw));
   }
 
   const arrayRegex = /\[((?:\([^)]*\)|<[^>]*>|\s|[-+]?\d+(?:\.\d+)?)+)\]\s*TJ/g;
+
   for (const match of text.matchAll(arrayRegex)) {
     const values = match[1].match(/\((?:\\.|[^\\)])*\)|<[^>]*>/g) || [];
     chunks.push(values.map(value => {
       if (value.startsWith("<")) {
         const hex = value.slice(1, -1).replace(/\s/g, "");
         try {
-          const bytes = new Uint8Array(hex.match(/.{1,2}/g)?.map(x => parseInt(x.padEnd(2, "0"), 16)) || []);
+          const bytes = new Uint8Array(
+            hex.match(/.{1,2}/g)?.map(x => parseInt(x.padEnd(2, "0"), 16)) || []
+          );
           return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-        } catch { return ""; }
+        } catch {
+          return "";
+        }
       }
       return unescapePdfString(value.slice(1, -1));
     }).join(""));
@@ -97,7 +111,9 @@ function extractPdfOperators(text) {
 
 async function inflatePdfStream(bytes) {
   try {
-    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate"));
+    const stream = new Blob([bytes])
+      .stream()
+      .pipeThrough(new DecompressionStream("deflate"));
     return new Uint8Array(await new Response(stream).arrayBuffer());
   } catch {
     return bytes;
@@ -113,22 +129,37 @@ async function extractPdfText(file) {
   while (true) {
     const start = latin.indexOf("stream", offset);
     if (start < 0) break;
-    const dataStart = latin[start + 6] === "\r" && latin[start + 7] === "\n" ? start + 8
-      : latin[start + 6] === "\n" ? start + 7 : start + 6;
+
+    const dataStart = latin[start + 6] === "\r" && latin[start + 7] === "\n"
+      ? start + 8
+      : latin[start + 6] === "\n"
+        ? start + 7
+        : start + 6;
+
     const end = latin.indexOf("endstream", dataStart);
     if (end < 0) break;
 
     const dictionaryStart = Math.max(0, latin.lastIndexOf("<<", start));
     const dictionary = latin.slice(dictionaryStart, start);
     const raw = bytes.slice(dataStart, end);
-    const decoded = dictionary.includes("/FlateDecode") ? await inflatePdfStream(raw) : raw;
+    const decoded = dictionary.includes("/FlateDecode")
+      ? await inflatePdfStream(raw)
+      : raw;
+
     chunks.push(new TextDecoder("utf-8", { fatal: false }).decode(decoded));
     offset = end + 9;
   }
 
-  if (!chunks.length) throw new Error("No readable PDF text streams were found.");
+  if (!chunks.length) {
+    throw new Error("No readable PDF text streams were found.");
+  }
+
   const extracted = chunks.flatMap(extractPdfOperators).join("\n");
-  if (!extracted.trim()) throw new Error("The PDF did not contain extractable text. Scanned/image-only PDFs require OCR and are not supported yet.");
+
+  if (!extracted.trim()) {
+    throw new Error("The PDF contains no extractable text. Scanned/image-only PDFs require OCR and are not supported yet.");
+  }
+
   return extracted;
 }
 
@@ -145,49 +176,79 @@ function prepare(item, category) {
 
 async function importItems(actor, text, category) {
   actor = getActor(actor);
-  if (!actor) throw new Error("Select an Actor or a token first.");
-  const items = parseInput(text).filter(Boolean).map(x => prepare(x, category));
+  if (!actor) throw new Error("Select an Actor or token first.");
+
+  const items = parseInput(text)
+    .filter(Boolean)
+    .map(x => prepare(x, category));
+
   if (!items.length) throw new Error("No importable items were found.");
   return actor.createEmbeddedDocuments("Item", items);
 }
 
 async function importFile(actor, file, category) {
   if (!file) throw new Error("No file was selected.");
-  const name = file.name.toLowerCase();
-  const text = name.endsWith(".pdf") ? await extractPdfText(file) : await file.text();
+
+  const name = String(file.name || "").toLowerCase();
+  if (!name.endsWith(".json") && !name.endsWith(".pdf")) {
+    throw new Error("Unsupported file type. Please use a .json or .pdf file.");
+  }
+
+  const text = name.endsWith(".pdf")
+    ? await extractPdfText(file)
+    : await file.text();
+
+  if (!text.trim()) throw new Error("The selected file is empty.");
   return importItems(actor, text, category);
 }
 
 function updateDropStatus(root, message, state = "") {
-  const status = root.querySelector(".trait-importer-status");
+  const status = root?.querySelector?.(".trait-importer-status");
   if (!status) return;
   status.textContent = message;
   status.dataset.state = state;
 }
 
 function wireDropZone(root, actor) {
+  if (!(root instanceof HTMLElement)) {
+    console.error(`${MODULE_ID} | Could not find the dialog HTML element.`);
+    return;
+  }
+
   const zone = root.querySelector(".trait-drop-zone");
   const fileInput = root.querySelector("input[name=file]");
   const categoryInput = root.querySelector("select[name=category]");
-  if (!zone || !fileInput) return;
+
+  if (!zone || !fileInput || !categoryInput) {
+    console.error(`${MODULE_ID} | Drag/drop controls were not found in the dialog.`);
+    return;
+  }
 
   const processFile = async file => {
     try {
-      const category = categoryInput.value;
       updateDropStatus(root, `Reading ${file.name}…`, "working");
-      const created = await importFile(actor, file, category);
-      updateDropStatus(root, `Imported ${created.length} ${categoryLabel(category)} item(s).`, "success");
-      ui.notifications.info(`Imported ${created.length} ${categoryLabel(category)} item(s) into ${actor.name}.`);
+      const created = await importFile(actor, file, categoryInput.value);
+      const label = categoryLabel(categoryInput.value);
+      updateDropStatus(root, `Imported ${created.length} ${label} item(s).`, "success");
+      ui.notifications.info(`Imported ${created.length} ${label} item(s) into ${actor.name}.`);
+      fileInput.value = "";
     } catch (error) {
       console.error(`${MODULE_ID} | File import failed`, error);
-      updateDropStatus(root, error.message || "File import failed.", "error");
-      ui.notifications.error(error.message || "File import failed.");
+      updateDropStatus(root, error?.message || "File import failed.", "error");
+      ui.notifications.error(error?.message || "File import failed.");
     }
   };
 
   zone.addEventListener("click", () => fileInput.click());
+  zone.addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      fileInput.click();
+    }
+  });
   zone.addEventListener("dragover", event => {
     event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
     zone.classList.add("dragover");
   });
   zone.addEventListener("dragleave", () => zone.classList.remove("dragover"));
@@ -205,14 +266,23 @@ function wireDropZone(root, actor) {
 
 async function openImporter(actor) {
   actor = getActor(actor);
-  if (!actor) return ui.notifications.warn("Select an Actor or token first.");
+  if (!actor) {
+    ui.notifications.warn("Select an Actor or token first.");
+    return;
+  }
+
   const DialogV2 = foundry?.applications?.api?.DialogV2;
-  if (!DialogV2) return ui.notifications.error("Trait Importer requires Foundry VTT v14.");
+  if (!DialogV2) {
+    ui.notifications.error("Trait Importer requires Foundry VTT v14 or newer.");
+    return;
+  }
 
   const content = `
   <div class="trait-importer" style="min-width:760px">
     <p><strong>Actor:</strong> ${escapeHtml(actor.name)} (${escapeHtml(actor.type)})</p>
-    <div class="form-group"><label>Import Type</label>
+
+    <div class="form-group">
+      <label>Import Type</label>
       <select name="category">
         <option value="attack">Attacks</option>
         <option value="feature">Features / Traits</option>
@@ -220,40 +290,61 @@ async function openImporter(actor) {
       </select>
     </div>
 
-    <div class="trait-drop-zone" tabindex="0">
+    <div class="trait-drop-zone" tabindex="0" role="button">
       <i class="fa-solid fa-cloud-arrow-up"></i>
       <strong>Drag & Drop JSON or PDF Here</strong>
       <span>or click to choose a file</span>
-      <small>Supported: .json, .pdf</small>
+      <small>Supported: .json and .pdf</small>
       <input type="file" name="file" accept=".json,.pdf,application/json,application/pdf" hidden>
     </div>
-    <div class="trait-importer-status" aria-live="polite">Drop a file to import it directly.</div>
 
-    <div class="form-group"><label>Or paste Foundry Item JSON / stat-block text</label>
-      <textarea name="source" rows="14" style="width:100%" placeholder='JSON object/array or simple text blocks. Example:\n\nLongsword. Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 8 (1d8 + 4) slashing damage.\n\nParry. The creature adds 2 to its AC against one melee attack that would hit it.'></textarea>
+    <div class="trait-importer-status" aria-live="polite">
+      Drop a file to import it directly.
+    </div>
+
+    <div class="form-group">
+      <label>Or paste Foundry Item JSON / stat-block text</label>
+      <textarea name="source" rows="14" style="width:100%" placeholder="JSON object/array or simple text blocks."></textarea>
     </div>
   </div>`;
 
   const dialog = new DialogV2({
-    window: { title: "Trait Importer", icon: "fa-solid fa-file-import" },
+    window: {
+      title: "Trait Importer",
+      icon: "fa-solid fa-file-import"
+    },
     position: { width: 900 },
     content,
     buttons: [
-      { action: "import", label: "Import Text", icon: "fa-solid fa-file-import", default: true, callback: async (_e, button) => {
-        const form = button.form;
-        const text = String(form.elements.source.value || "").trim();
-        if (!text) { ui.notifications.warn("Paste content first, or drag in a JSON/PDF file."); return false; }
-        const category = form.elements.category.value;
-        const created = await importItems(actor, text, category);
-        ui.notifications.info(`Imported ${created.length} ${categoryLabel(category)} item(s) into ${actor.name}.`);
-        return true;
-      }},
-      { action: "cancel", label: "Close", icon: "fa-solid fa-xmark" }
-    ],
-    render: html => wireDropZone(html instanceof HTMLElement ? html : html[0], actor)
+      {
+        action: "import",
+        label: "Import Text",
+        icon: "fa-solid fa-file-import",
+        default: true,
+        callback: async (_event, button) => {
+          const form = button.form;
+          const text = String(form?.elements?.source?.value || "").trim();
+          if (!text) {
+            ui.notifications.warn("Paste content first, or drag in a JSON/PDF file.");
+            return false;
+          }
+
+          const category = form.elements.category.value;
+          const created = await importItems(actor, text, category);
+          ui.notifications.info(`Imported ${created.length} ${categoryLabel(category)} item(s) into ${actor.name}.`);
+          return true;
+        }
+      },
+      {
+        action: "cancel",
+        label: "Close",
+        icon: "fa-solid fa-xmark"
+      }
+    ]
   });
 
-  dialog.render(true);
+  await dialog.render(true);
+  wireDropZone(dialog.element, actor);
 }
 
 Hooks.on("getActorDirectoryEntryContext", (_html, options) => {
@@ -267,7 +358,12 @@ Hooks.on("getActorDirectoryEntryContext", (_html, options) => {
 
 Hooks.on("getActorSheetHeaderButtons", (app, buttons) => {
   if (!game.user.isGM || !app.actor) return;
-  buttons.unshift({ label: "Trait Importer", class: "trait-importer-button", icon: "fa-solid fa-file-import", onclick: () => openImporter(app.actor) });
+  buttons.unshift({
+    label: "Trait Importer",
+    class: "trait-importer-button",
+    icon: "fa-solid fa-file-import",
+    onclick: () => openImporter(app.actor)
+  });
 });
 
 globalThis.TraitImporter = {
