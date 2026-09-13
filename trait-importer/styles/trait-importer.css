@@ -1,0 +1,3 @@
+.trait-importer textarea { font-family: var(--font-mono); resize: vertical; }
+.trait-importer .form-group { margin-bottom: 10px; }
+.trait-importer label { font-weight: 700; display: block; margin-bottom: 4px; }
