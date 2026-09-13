@@ -2,9 +2,23 @@
   "id": "trait-importer",
   "title": "Trait Importer",
   "description": "Import attacks, features, traits, and legendary actions separately into D&D 5e Player Characters, NPCs, and Monsters from text, JSON, or PDF files.",
-  "version": "1.1.0",
-  "compatibility": {"minimum": "14.359", "verified": "14"},
-  "relationships": {"systems": [{"id": "dnd5e", "type": "system", "compatibility": {"minimum": "6.0.0", "verified": "6.0.0"}]},
+  "version": "1.1.1",
+  "compatibility": {
+    "minimum": "14.359",
+    "verified": "14"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system",
+        "compatibility": {
+          "minimum": "6.0.0",
+          "verified": "6.0.0"
+        }
+      }
+    ]
+  },
   "esmodules": ["scripts/main.js"],
   "styles": ["styles/trait-importer.css"],
   "authors": [{"name": "siller94-art"}],
