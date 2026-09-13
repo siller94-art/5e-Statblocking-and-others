@@ -1,51 +1,115 @@
 # Statblock 5e
 
-A single-file Foundry VTT v14 module for importing D&D 5e content from copied text, clipboard text, or text-based PDFs.
+A simple, unified Foundry VTT v14 module for importing D&D 5e content without a build step.
 
-## Version 3.0.0
+## Version 4.0.0
 
-### Importer
-- Auto-detect or manually select Monster / NPC, Species / Race, Class, Subclass, or Weapon / Attack.
-- **Paste Clipboard Text** button for text copied from D&D Beyond and other websites.
-- Normal Ctrl+V / Cmd+V also works when browser clipboard permission is unavailable.
-- Loads TXT, MD, JSON, and text-based PDF files.
-- Preserves the original imported source in the created actor/item description.
+### Simple import workflow
+1. Open the **Actor Directory**.
+2. Click **Import 5e Content**.
+3. Choose **Auto-detect** or select exactly what you are importing.
+4. Either click **Paste Clipboard Text**, use normal **Ctrl+V / Cmd+V**, or upload a file.
+5. Click **Import**.
 
-### Monsters and NPCs
-- Creates a D&D5e NPC Actor.
-- Parses AC, HP, HP formula, speed, challenge rating, proficiency bonus, passive perception, size, creature type, alignment, languages, and six ability scores when present.
-- Parses Actions, Bonus Actions, Reactions, and Legendary Actions.
-- Creates weapon Items for recognizable attacks and feat Items for other actions.
+### Supported input
+- **Clipboard Text** — copies text already on your clipboard into the importer.
+- **Manual D&D Beyond copy/paste** — copy the entry yourself from D&D Beyond, then paste it into the module.
+- **PDF** — extracts common selectable PDF text streams.
+- **TXT** — plain text files.
+- **MD** — Markdown files.
+- **JSON** — JSON files are read and formatted as source text.
+
+Scanned/image-only PDFs do not contain selectable text and need OCR before importing.
+
+### Supported content categories
+- Monster / NPC
+- Weapon
+- Attack
+- Trait
+- Action
+- Bonus Action
+- Reaction
+- Legendary Action
+- Lair Action
+- Species / Race
+- Class
+- Subclass
+- Auto-detect
+
+### Monster / NPC information
+The importer attempts to preserve and populate common statblock information when it is present, including:
+- Name
+- Size and creature type
+- Alignment
+- Armor Class
+- Hit Points and HP formula
+- Speed
+- Six ability scores
+- Proficiency bonus
+- Challenge Rating
+- Passive Perception
+- Senses
+- Languages
+- Skills
+- Saving throws
+- Damage resistances
+- Damage immunities
+- Condition immunities
+- Spellcasting text
+- Traits
+- Actions
+- Bonus Actions
+- Reactions
+- Legendary Actions
+- Lair Actions
+
+The complete original source text is also preserved in the imported actor/item description so information that does not map cleanly to a D&D5e field is not lost.
 
 ### Weapons and attacks
-- Recognizes common 5e phrases such as **Melee Weapon Attack** and **Ranged Weapon Attack**.
-- Parses attack bonus, damage dice, damage modifier, damage type, ability, reach/range, and long range.
-- Creates a D&D5e weapon Item and attempts to attach a native D&D5e Attack activity. If an activity schema changes or is rejected, the weapon Item is retained instead of aborting the import.
+Weapons and attacks are separate importer choices.
 
-### Species, classes, and subclasses
-- Creates native D&D5e Race, Class, and Subclass Items.
-- Preserves the complete imported text so it can be edited after import.
+- **Weapon** creates a D&D5e weapon item.
+- **Attack** creates an NPC actor containing the attack weapon/activity.
+- Monster attacks are recognized separately from normal actions.
+- Attack parsing attempts to capture melee/ranged type, attack bonus, ability, damage dice, damage modifier, damage type, reach, range, and long range.
+- The module attempts to attach a native D&D5e v6 Attack Activity. If the system rejects an activity schema, the weapon item is retained instead of aborting the import.
+
+### Action categories
+Monster entries are separated into their own categories:
+- Traits
+- Actions
+- Bonus Actions
+- Reactions
+- Legendary Actions
+- Lair Actions
+
+Lair actions are specifically created as **Lair Action:** items rather than being mixed into ordinary actions.
+
+### D&D Beyond and website workflow
+This module uses a manual copy/paste workflow. It does not:
+- log in to D&D Beyond or another website;
+- scrape web pages;
+- run bots against websites;
+- bypass access controls;
+- automatically download protected website content.
+
+Copy only material you have permission to use.
 
 ## Compatibility
-- Foundry VTT **14.359+ / v14**.
-- D&D5e **6.0.0**.
-- No build step and no external runtime dependency.
-
-## PDF limitation
-The built-in reader extracts common selectable PDF text streams. Scanned/image-only PDFs do not contain selectable text and require OCR first.
-
-## Website copying
-The clipboard feature is manual copy/paste only. The module does not log in to websites, scrape pages, bypass access controls, or automatically download protected content. Use content only when you have the right to use it.
+- Foundry VTT **14.359+ / v14**
+- D&D5e **6.0.0**
+- No build step
+- No external runtime dependency
 
 ## Installation
 
 ### Manifest installation
-Use this manifest URL in Foundry VTT's **Install Module** window:
+Paste this manifest into Foundry VTT's **Install Module** window:
 
 `https://raw.githubusercontent.com/siller94-art/5e-Statblocking-and-others/main/module.json`
 
 ### Manual ZIP installation
-Download the repository ZIP and place the `statblock-5e` module folder in your Foundry `Data/modules/` directory.
+Download the repository ZIP and place the module folder in your Foundry `Data/modules/` directory.
 
 ## Project
 
