@@ -1,5 +1,5 @@
-/* Statblock 5e v4.1 UI enhancement
- * Adds a simple drop zone and live statblock preview without changing the importer core.
+/* Statblock 5e v4.3.0 UI enhancement
+ * Compact dark upload controls and a clear Create button.
  */
 const SB5E_UI = "statblock-5e-ui";
 const SB5E_LABELS = {auto:"Auto-detect",monster:"Monster / NPC",weapon:"Weapon",attack:"Attack",trait:"Trait",action:"Action",bonus:"Bonus Action",reaction:"Reaction",legendary:"Legendary Action",lair:"Lair Action",race:"Species / Race",class:"Class",subclass:"Subclass"};
@@ -88,6 +88,7 @@ function enhanceImporter(root) {
   if (typeSelect) typeSelect.addEventListener("change", updatePreview);
   textarea.addEventListener("input", updatePreview);
   file?.addEventListener("change", () => setTimeout(updatePreview, 50));
+  addCreateButton(root);
   updatePreview();
 
   function updatePreview() {
@@ -100,6 +101,20 @@ function enhanceImporter(root) {
     const type = selected === "auto" ? detect(text) : selected;
     preview.innerHTML = renderPreview(text, type);
   }
+}
+
+function addCreateButton(root) {
+  if (root.querySelector(".sb5e-create-button")) return;
+  const actions = document.createElement("div");
+  actions.className = "sb5e-create-row";
+  actions.innerHTML = `<button type="button" class="sb5e-create-button"><i class="fa-solid fa-plus"></i> Create</button>`;
+  root.appendChild(actions);
+  actions.querySelector("button").addEventListener("click", () => {
+    const dialog = root.closest(".dialog") || root.closest("form")?.closest(".dialog");
+    const importButton = dialog?.querySelector("button[data-action=import]") || dialog?.querySelector("button[data-action=import]") || [...(dialog?.querySelectorAll("button") || [])].find(b => /import/i.test(b.textContent));
+    if (importButton) importButton.click();
+    else ui.notifications.warn("The Create action could not be found. Use the Import button in the dialog footer.");
+  });
 }
 
 function detect(text) {
