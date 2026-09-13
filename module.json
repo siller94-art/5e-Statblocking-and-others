@@ -2,7 +2,7 @@
   "id": "statblock-5e",
   "title": "Statblock 5e",
   "description": "Import D&D 5e monsters/NPCs, species (races), classes, and subclasses from pasted text or PDF files into the D&D 5e system.",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "compatibility": {
     "minimum": "14.359",
     "verified": "14",
