@@ -1,26 +1,11 @@
 {
   "id": "statblock-5e",
   "title": "Statblock 5e",
-  "description": "Import D&D 5e monsters/NPCs, species (races), classes, and subclasses from pasted text or PDF files into the D&D 5e system.",
-  "version": "2.1.0",
-  "compatibility": {
-    "minimum": "14.359",
-    "verified": "14",
-    "maximum": "14"
-  },
-  "relationships": {
-    "systems": [
-      {
-        "id": "dnd5e",
-        "type": "system",
-        "compatibility": {
-          "minimum": "6.0.0",
-          "verified": "6.0.0"
-        }
-      }
-    ]
-  },
-  "esmodules": ["scripts/main.js"],
+  "description": "Import D&D 5e monsters/NPCs, weapons and attacks, species, classes, and subclasses from pasted text, clipboard text, or PDF files.",
+  "version": "2.2.0",
+  "compatibility": {"minimum": "14.359", "verified": "14", "maximum": "14"},
+  "relationships": {"systems": [{"id": "dnd5e", "type": "system", "compatibility": {"minimum": "6.0.0", "verified": "6.0.0"}}]},
+  "esmodules": ["scripts/main-v2.2.js"],
   "authors": [{"name": "Statblock 5e"}],
   "url": "https://github.com/siller94-art/5e-Statblocking-and-others",
   "manifest": "https://raw.githubusercontent.com/siller94-art/5e-Statblocking-and-others/main/module.json",
