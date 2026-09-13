@@ -2,7 +2,7 @@
 
 A simple, unified Foundry VTT v14 module for importing D&D 5e content.
 
-## Version 4.1.0
+## Version 4.2.0
 
 ### Easy importer UI
 - Large **Drop a file here** upload area.
@@ -13,6 +13,23 @@ A simple, unified Foundry VTT v14 module for importing D&D 5e content.
 - Preview shows detected content type, monster name, AC, HP, speed, CR, ability scores, detected action categories, attack count, and a collapsible source preview.
 - Auto-detection can still be overridden with the content type selector.
 - Clear and normal Ctrl+V / Cmd+V workflows remain supported.
+
+### Automatic Foundry icon matching
+Imported Items are automatically assigned matching **Foundry VTT core icons** when the item does not already have a custom image. Examples include:
+- **Shortsword** → Foundry shortsword icon.
+- **Longsword** → longsword icon.
+- **Greatsword** → greatsword icon.
+- **Dagger** → dagger icon.
+- **Battleaxe / Handaxe / Greataxe** → axe icons.
+- **Rapier / Scimitar** → matching sword icons.
+- **Mace / Morningstar / Maul / Hammer** → matching weapon icons.
+- **Spear / Pike / Halberd / Javelin / Trident** → matching polearm icons.
+- **Shortbow / Longbow / Crossbow** → matching ranged-weapon icons.
+- **Shield / Armor / Potion** → matching equipment icons.
+- **Spells, Traits, Actions, Reactions, Legendary Actions, and Lair Actions** → matching Foundry utility/magic icons.
+- Imported NPC actors receive a creature icon when no custom image is already assigned.
+
+The icon matcher uses Foundry's bundled icon paths and does not download outside artwork.
 
 ### Supported input
 - Clipboard Text
