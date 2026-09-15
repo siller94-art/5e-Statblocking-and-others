@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Statblock 5e">
+  <title>Statblock 5e — DM App</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div><strong>Statblock 5e</strong><span>DM Companion</span></div>
+    <button id="install" class="icon-button" hidden aria-label="Install app">＋</button>
+  </header>
+
+  <main>
+    <section id="import-view" class="view active">
+      <div class="hero"><span class="eyebrow">QUICK IMPORT</span><h1>Build a clean statblock.</h1><p>Paste, format, save to your library, or copy the corrected version.</p></div>
+      <div class="card">
+        <label for="source">Statblock text</label>
+        <textarea id="source" rows="14" placeholder="Paste a D&D 5e statblock here…"></textarea>
+        <div class="button-row"><button id="format" class="primary">Correct Formatting</button><button id="clear">Clear</button></div>
+      </div>
+      <div id="preview" class="card preview"><div class="empty">Your corrected statblock will appear here.</div></div>
+      <div class="button-row sticky-actions"><button id="save" class="primary" disabled>Save to Library</button><button id="copy" disabled>Copy</button></div>
+    </section>
+
+    <section id="library-view" class="view">
+      <div class="hero"><span class="eyebrow">DM LIBRARY</span><h1>Your statblocks.</h1><p>Saved on this device for fast table-side access.</p></div>
+      <div class="search"><input id="library-search" type="search" placeholder="Search monsters, NPCs, actions…"></div>
+      <div id="library" class="library"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="App navigation">
+    <button class="nav active" data-view="import-view">＋<span>Import</span></button>
+    <button class="nav" data-view="library-view">▤<span>Library</span></button>
+  </nav>
+
+  <script src="app.js"></script>
+</body>
+</html>
