@@ -1,8 +1,8 @@
 {
   "id": "statblock-5e",
   "title": "Statblock 5e",
-  "description": "Simple D&D 5e importer for Foundry VTT with Clipboard Text, PDF/TXT/MD/JSON upload, manual D&D Beyond copy/paste, live statblock preview, and automatic Foundry core item icons.",
-  "version": "4.2.0",
+  "description": "Simple D&D 5e importer for Foundry VTT with Clipboard Text, PDF/TXT/MD/JSON upload, manual D&D Beyond copy/paste, live statblock preview, automatic Foundry core item icons, and a mobile DM companion.",
+  "version": "4.3.0",
   "compatibility": {"minimum": "14.359", "verified": "14", "maximum": "14"},
   "relationships": {"systems": [{"id": "dnd5e", "type": "system", "compatibility": {"minimum": "6.0.0", "verified": "6.0.0"}}]},
   "esmodules": ["scripts/main.js", "scripts/ui.js", "scripts/icons.js"],
