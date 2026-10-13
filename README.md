@@ -61,6 +61,14 @@ The complete original source text is preserved in the imported actor/item descri
 ### D&D Beyond and website workflow
 This module uses manual copy/paste. It does not log in to websites, scrape pages, run bots, bypass access controls, or automatically download protected website content. Copy only material you have permission to use.
 
+## Homebrew Item Importer (separate module)
+The `item-importer/` folder holds a separate module for pasting weapons, armor, magic items, potions, tools,
+gear and containers. Install it with this manifest URL:
+
+`https://raw.githubusercontent.com/siller94-art/5e-Statblocking-and-others/main/item-importer/module.json`
+
+See [item-importer/README.md](item-importer/README.md).
+
 ## Compatibility
 - Foundry VTT **14.359+ / v14**
 - D&D5e **6.0.0**

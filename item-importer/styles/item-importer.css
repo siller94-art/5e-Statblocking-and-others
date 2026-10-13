@@ -1,0 +1,31 @@
+.hii-open { flex: 0 0 100%; margin-top: 4px; }
+.hii-app .window-content { padding: 8px; }
+.hii-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; height: 100%; }
+.hii-pane { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.hii-toolbar, .hii-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.hii-toolbar select { flex: 1 1 140px; width: auto; }
+.hii-toolbar button, .hii-footer button { flex: 0 0 auto; width: auto; }
+.hii-spacer { flex: 1; }
+.hii-check { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.hii-source textarea { flex: 1; min-height: 0; resize: none; font-family: var(--font-mono, monospace); font-size: 12px; line-height: 1.45; }
+.hii-preview { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.hii-empty { opacity: 0.7; font-style: italic; margin: 8px; }
+.hii-warn { color: var(--color-level-error, #c33); margin: 8px; }
+.hii-card { border: 1px solid var(--color-border-light-tertiary, #8884); border-left: 3px solid var(--color-level-success, #3a7); border-radius: 0 4px 4px 0; padding: 6px 8px; }
+.hii-card.hii-warned { border-left-color: var(--color-level-warning, #b80); }
+.hii-card.hii-bad { border-left-color: var(--color-level-error, #c33); }
+.hii-card header { display: flex; align-items: center; gap: 6px; }
+.hii-card header strong { flex: 1; }
+.hii-qty { font-weight: normal; opacity: 0.7; }
+.hii-badge { font-size: 11px; padding: 1px 6px; border-radius: 3px; background: #8883; }
+.hii-rules { background: #4a7ab033; }
+.hii-found, .hii-warnings { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 3px 10px; font-size: 12px; }
+.hii-found i { color: var(--color-level-success, #3a7); margin-right: 3px; }
+.hii-warnings { flex-direction: column; color: var(--color-level-warning, #b80); }
+.hii-warnings i { margin-right: 4px; }
+.hii-json textarea { width: 100%; height: 180px; font-family: var(--font-mono, monospace); font-size: 11px; }
+.hii-json .hint { font-size: 11px; opacity: 0.7; margin: 2px 0 0; }
+.hii-footer label { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.hii-footer input[type=text] { width: 140px; }
+.hii-footer select { max-width: 220px; }
+.hii-import { margin-left: auto; }
