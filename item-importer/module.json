@@ -1,0 +1,27 @@
+{
+  "id": "simple-5e-item-importer",
+  "title": "Simple 5e Item Importer",
+  "description": "Create regular and magical D&D 5e items from pasted text or JSON; drag created items from the Items directory onto actors.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "14",
+    "verified": "14",
+    "maximum": "14"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system"
+      }
+    ]
+  },
+  "esmodules": [
+    "scripts/item-importer.js"
+  ],
+  "authors": [
+    {
+      "name": "siller94-art"
+    }
+  ]
+}
