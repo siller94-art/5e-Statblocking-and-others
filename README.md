@@ -1,97 +1,75 @@
 # Statblock 5e
 
-A simple, unified Foundry VTT v14 module for importing D&D 5e content, plus an installable phone-friendly DM companion.
+A Foundry VTT module for importing **monster, NPC and familiar statblocks** into the dnd5e system.
+Paste a statblock straight from a PDF, D&D Beyond, a website or Homebrewery, check what was read,
+and import it as a ready-to-play NPC actor. Reads both **2014** and **2024** statblock layouts.
 
-## Version 4.3.0
+Requires **Foundry VTT v14** and **dnd5e 6.x**.
 
-### Easy importer UI
-- Compact dark upload controls inspired by the straightforward workflow of the established 5e Statblock Importer.
-- **Drop a file here** / **Choose File** for PDF, TXT, MD, and JSON.
-- **Paste Clipboard Text** for copied statblocks.
-- Manual D&D Beyond copy/paste workflow.
-- Live **statblock preview** updates as text is pasted or edited.
-- Preview shows detected content type, monster name, AC, HP, speed, CR, ability scores, detected action categories, attack count, and a collapsible source preview.
-- Clear and normal Ctrl+V / Cmd+V workflows remain supported.
-- A dark **Create** button is available in the importer dialog and triggers the existing import action.
+## Install
+In Foundry's setup screen open **Add-on Modules → Install Module**, paste this into **Manifest URL** and click **Install**:
 
-### DM phone app
-The repository now includes a lightweight Progressive Web App at `app/`. It is designed for DMs using a phone at the table and can be added to the home screen from a supported browser.
+```
+https://raw.githubusercontent.com/siller94-art/5e-Statblocking-and-others/main/module.json
+```
 
-- Paste a statblock and use **Correct Formatting** to normalize spacing, headings, and common field labels.
-- Preview the cleaned statblock in a phone-friendly 5e-style card.
-- Save corrected statblocks to a local **DM Library**.
-- Search the library, reopen entries, copy them, or delete them.
-- Library data is stored locally on the device; no account or server database is required.
-- Offline caching is included after the app has been opened once online.
-- This is a web/PWA companion, not a native App Store or Play Store binary.
+Enable **Statblock 5e** in your world. The **Actors** sidebar gets an **Import Statblock** button.
 
-### Automatic Foundry icon matching
-Imported Items are automatically assigned matching **Foundry VTT core icons** when the item does not already have a custom image. The icon matcher uses Foundry's bundled icon paths and does not download outside artwork.
+## Using it
+1. Choose **Import as**: **Monster**, **NPC** or **Familiar**.
+2. Paste one or more statblocks, press **Paste** to read your clipboard, or drop / open a `.txt`, `.md` or `.pdf` file.
+   Several statblocks can go in at once: each new "Medium Humanoid, Neutral" line starts the next creature.
+3. With **Auto parse** on, the right side shows each creature as a statblock card: AC, HP, speed, CR, the six
+   abilities with saves, every trait and action with what was understood (attack bonus and damage, save DC,
+   recharge, uses per day, spells), and ⚠ notes for anything to check.
+4. Pick a **source book** name and where the creatures go (world actors or an unlocked Actor compendium), then **Import**.
 
-### Supported input
-- Clipboard Text
-- Manual D&D Beyond copy/paste
-- PDF with selectable text
-- TXT
-- MD
-- JSON
+Re-importing a creature with **Update existing** checked replaces it in place (keeping its artwork) instead of making a copy.
 
-Scanned/image-only PDFs need OCR before importing.
+### Monsters, NPCs and familiars
+| Import as | Folder | Token |
+|---|---|---|
+| Monster | Monsters | Hostile, not linked |
+| NPC | NPCs | Neutral, not linked |
+| Familiar | Familiars | Friendly, linked, vision on |
 
-### Supported content categories
-- Monster / NPC
-- Weapon
-- Attack
-- Trait
-- Action
-- Bonus Action
-- Reaction
-- Legendary Action
-- Lair Action
-- Species / Race
-- Class
-- Subclass
-- Auto-detect
+For **familiars** you can also pick the **player who owns it** and change its creature type to **Celestial, Fey or Fiend**,
+as *Find Familiar* allows.
 
-### Monster / NPC information
-The importer attempts to preserve and populate common statblock information when present, including name, size, creature type, alignment, AC, HP and formula, speed, six ability scores, proficiency bonus, challenge rating, passive perception, senses, languages, skills, saving throws, resistances, immunities, condition immunities, spellcasting text, traits, actions, bonus actions, reactions, legendary actions, and lair actions.
+## What gets imported
+Everything is built the way the official dnd5e monsters are, so it works with the sheet, the chat cards and the combat tracker:
 
-The complete original source text is preserved in the imported actor/item description so information that does not map cleanly to a D&D5e field is not lost.
+- **Statistics:** size, type and subtype, swarms, alignment, AC (natural armor shown as such), HP and hit dice formula,
+  initiative, all speeds and hover, ability scores, saving throw and skill proficiencies (expertise included),
+  damage vulnerabilities, resistances and immunities (including "from nonmagical attacks"), condition immunities,
+  senses, languages and telepathy, and CR.
+- **Attacks** roll exactly the printed to-hit and damage, including extra damage ("plus 4 (1d8) acid damage"),
+  melee-or-ranged weapons, two-handed versatile damage, and conditional damage ("if the attack roll had Advantage")
+  as a separate option.
+- **Saving throw effects** (breath weapons, auras, rays) get the printed DC, save, damage, half-on-success and area template.
+- **Recharge 5–6**, **X/Day** and **per rest** features track their uses.
+- **Legendary actions** (with the number per round and costs), **legendary resistance**, and **lair actions**.
+- **Spellcasting** (2014 and 2024, slots and innate/X per day): spells are linked from your compendiums — the dnd5e SRD
+  spells included — with the printed save DC, attack bonus and casting ability. Legendary actions that cast a spell
+  ("uses Spellcasting to cast Command") link the spell too. Spells that can't be found are listed after import.
+- Traits and actions get matching Foundry icons, and the original statblock text is kept in the biography.
 
-### D&D Beyond and website workflow
-This module uses manual copy/paste. It does not log in to websites, scrape pages, run bots, bypass access controls, or automatically download protected website content. Copy only material you have permission to use.
+## Macro API
+```js
+Statblock5e.open();
+await Statblock5e.importText(text, { kind: "monster", book: "Marks of Aeyra" });   // kind: "monster" | "npc" | "familiar"
+await Statblock5e.importText(text, { kind: "familiar", ownerId: game.users.getName("Sam").id, target: "world.bestiary" });
+```
 
-## Homebrew Item Importer (separate module)
-The `item-importer/` folder holds a separate module for pasting weapons, armor, magic items, potions, tools,
-gear and containers. Install it with this manifest URL:
+## Notes
+- Scanned or image-only PDFs have no text to read; copy the text out of your PDF reader instead, or run OCR first.
+- Effects that change other things (a condition a hit applies, an aura's ongoing effect) stay as description text.
+- This module only reads text you paste or load. It doesn't log in to or download from any website.
 
-`https://raw.githubusercontent.com/siller94-art/5e-Statblocking-and-others/main/item-importer/module.json`
-
-See [item-importer/README.md](item-importer/README.md).
-
-## Compatibility
-- Foundry VTT **14.359+ / v14**
-- D&D5e **6.0.0**
-- No build step
-- No external runtime dependency
-
-## Installation
-
-### Manifest installation
-Paste this manifest into Foundry VTT's **Install Module** window:
-
-`https://raw.githubusercontent.com/siller94-art/5e-Statblocking-and-others/main/module.json`
-
-### Phone DM app
-Open the `/app/` directory from a web host that serves the repository, then use your phone browser's **Add to Home Screen / Install App** option. A GitHub Pages deployment is suitable once Pages is enabled for the repository.
-
-### Manual ZIP installation
-Download the repository ZIP and place the module folder in your Foundry `Data/modules/` directory.
-
-## Project
-
-`https://github.com/siller94-art/5e-Statblocking-and-others`
+## Development
+`examples/example-statblocks.txt` holds test statblocks in both editions. After changing anything, run `./build.sh`
+and commit `statblock-5e.zip` — that zip is what Foundry downloads. The GitHub check parses the examples and
+confirms the zip is up to date.
 
 ## License
-
-MIT. See `LICENSE.txt`.
+MIT — see [LICENSE.txt](LICENSE.txt).

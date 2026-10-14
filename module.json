@@ -1,16 +1,19 @@
 {
   "id": "statblock-5e",
   "title": "Statblock 5e",
-  "description": "Simple D&D 5e importer for Foundry VTT with Clipboard Text, PDF/TXT/MD/JSON upload, manual D&D Beyond copy/paste, live statblock preview, automatic Foundry core item icons, and a mobile DM companion.",
-  "version": "4.3.0",
-  "compatibility": {"minimum": "14.359", "verified": "14", "maximum": "14"},
-  "relationships": {"systems": [{"id": "dnd5e", "type": "system", "compatibility": {"minimum": "6.0.0", "verified": "6.0.0"}}]},
-  "esmodules": ["scripts/main.js", "scripts/ui.js", "scripts/icons.js"],
-  "styles": ["styles/statblock-5e.css"],
-  "authors": [{"name": "Statblock 5e"}],
+  "description": "Paste monster, NPC and familiar statblocks straight from a PDF, D&D Beyond, a website or Homebrewery, check what was read, and import them as ready-to-play dnd5e NPC actors with working attacks, saves, recharges, legendary actions and spellcasting. Reads 2014 and 2024 layouts.",
+  "version": "5.0.0",
+  "authors": [{ "name": "siller94-art" }],
   "url": "https://github.com/siller94-art/5e-Statblocking-and-others",
   "manifest": "https://raw.githubusercontent.com/siller94-art/5e-Statblocking-and-others/main/module.json",
-  "download": "https://github.com/siller94-art/5e-Statblocking-and-others/archive/refs/heads/main.zip",
-  "readme": "README.md",
-  "license": "LICENSE.txt"
+  "download": "https://raw.githubusercontent.com/siller94-art/5e-Statblocking-and-others/main/statblock-5e.zip",
+  "readme": "https://github.com/siller94-art/5e-Statblocking-and-others#readme",
+  "bugs": "https://github.com/siller94-art/5e-Statblocking-and-others/issues",
+  "license": "LICENSE.txt",
+  "compatibility": { "minimum": "14", "verified": "14" },
+  "relationships": {
+    "systems": [{ "id": "dnd5e", "type": "system", "compatibility": { "minimum": "6.0.0", "verified": "6.0.6" } }]
+  },
+  "esmodules": ["scripts/main.js"],
+  "styles": ["styles/statblock-5e.css"]
 }

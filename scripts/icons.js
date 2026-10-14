@@ -1,113 +1,87 @@
-/* Statblock 5e v4.2.0
- * Automatic Foundry VTT core icon matching for imported Items and NPCs.
- * Uses Foundry's bundled icons; no external artwork is downloaded.
+/**
+ * Foundry core icons for imported features, matched by name. Every path here is one the
+ * official dnd5e monsters use, so it ships with Foundry.
  */
-const SB5E_ICON_DEFAULTS = {
-  weapon: "icons/weapons/swords/sword-guard-worn-purple.webp",
-  attack: "icons/weapons/swords/sword-guard.webp",
-  trait: "icons/skills/trades/academics-study-reading-book.webp",
-  action: "icons/skills/melee/strike-sword-steel-blue.webp",
-  bonus: "icons/skills/melee/strike-sword-steel-blue.webp",
-  reaction: "icons/skills/melee/defensive-shield-block.webp",
-  legendary: "icons/magic/control/debuff-energy-hold-levitate-blue.webp",
-  lair: "icons/environment/wilderness/altar-ancient.webp",
-  race: "icons/creatures/humanoids/human-warrior.webp",
-  class: "icons/skills/trades/academics-study-reading-book.webp",
-  subclass: "icons/skills/trades/academics-study-reading-book.webp",
-  spell: "icons/magic/symbols/runes-star-blue.webp",
-  consumable: "icons/consumables/potions/potion-bottle-corked-blue.webp",
-  armor: "icons/equipment/chest/plate-armor.webp",
-  shield: "icons/equipment/shield/heater-steel.webp",
-  tool: "icons/tools/smithing/anvil.webp",
-  equipment: "icons/equipment/neck/cloak-hooded-leather-brown.webp"
-};
 
-const SB5E_WEAPON_ICONS = [
-  [/(?:^|\\b)shortsword(?:\\b|$)/i, "icons/weapons/swords/sword-guard-worn-purple.webp"],
-  [/(?:^|\\b)longsword(?:\\b|$)/i, "icons/weapons/swords/greatsword-guard.webp"],
-  [/(?:^|\\b)greatsword(?:\\b|$)/i, "icons/weapons/swords/greatsword-crossguard-steel.webp"],
-  [/(?:^|\\b)rapier(?:\\b|$)/i, "icons/weapons/swords/sword-guard-bronze.webp"],
-  [/(?:^|\\b)scimitar(?:\\b|$)/i, "icons/weapons/swords/scimitar-worn-blue.webp"],
-  [/(?:^|\\b)dagger(?:s)?(?:\\b|$)/i, "icons/weapons/daggers/dagger-steel.webp"],
-  [/(?:^|\\b)handaxe(?:\\b|$)/i, "icons/weapons/axes/handaxe.webp"],
-  [/(?:^|\\b)battleaxe(?:\\b|$)/i, "icons/weapons/axes/axe-battle.webp"],
-  [/(?:^|\\b)greataxe(?:\\b|$)/i, "icons/weapons/axes/axe-battle.webp"],
-  [/(?:^|\\b)war pick(?:\\b|$)/i, "icons/weapons/axes/pickaxe-iron-green.webp"],
-  [/(?:^|\\b)mace(?:\\b|$)/i, "icons/weapons/maces/mace-cube-spiked-steel.webp"],
-  [/(?:^|\\b)morningstar(?:\\b|$)/i, "icons/weapons/maces/mace-cube-spiked-steel.webp"],
-  [/(?:^|\\b)maul(?:\\b|$)/i, "icons/weapons/hammers/hammer-double-steel-embossed.webp"],
-  [/(?:^|\\b)hammer(?:s)?(?:\\b|$)/i, "icons/weapons/hammers/hammer-double-steel-embossed.webp"],
-  [/(?:^|\\b)club(?:\\b|$)/i, "icons/weapons/clubs/club-spiked-brown.webp"],
-  [/(?:^|\\b)quarterstaff(?:\\b|$)/i, "icons/weapons/staves/staff-simple.webp"],
-  [/(?:^|\\b)staff(?:\\b|$)/i, "icons/weapons/staves/staff-simple.webp"],
-  [/(?:^|\\b)spear(?:s)?(?:\\b|$)/i, "icons/weapons/polearms/spear-simple-engraved.webp"],
-  [/(?:^|\\b)pike(?:\\b|$)/i, "icons/weapons/polearms/spear-hooked-spike.webp"],
-  [/(?:^|\\b)halberd(?:\\b|$)/i, "icons/weapons/polearms/halberd-engraved-black.webp"],
-  [/(?:^|\\b)javelin(?:s)?(?:\\b|$)/i, "icons/weapons/polearms/javelin.webp"],
-  [/(?:^|\\b)trident(?:\\b|$)/i, "icons/weapons/polearms/trident.webp"],
-  [/(?:^|\\b)shortbow(?:\\b|$)/i, "icons/weapons/bows/shortbow.webp"],
-  [/(?:^|\\b)longbow(?:\\b|$)/i, "icons/weapons/bows/longbow.webp"],
-  [/(?:^|\\b)crossbow(?:\\b|$)/i, "icons/weapons/crossbows/crossbow.webp"],
-  [/(?:^|\\b)hand crossbow(?:\\b|$)/i, "icons/weapons/crossbows/crossbow-hand.webp"],
-  [/(?:^|\\b)whip(?:\\b|$)/i, "icons/sundries/survival/leather-strap-brown.webp"],
-  [/(?:^|\\b)flail(?:\\b|$)/i, "icons/weapons/maces/flail-steel.webp"],
-  [/(?:^|\\b)glaive(?:\\b|$)/i, "icons/weapons/polearms/glaive-hooked.webp"],
-  [/(?:^|\\b)scythe(?:\\b|$)/i, "icons/weapons/polearms/scythe-hooked.webp"],
-  [/(?:^|\\b)blowgun(?:\\b|$)/i, "icons/weapons/ammunition/arrow-head-poison.webp"],
-  [/(?:^|\\b)sling(?:\\b|$)/i, "icons/weapons/ammunition/sling-bullets.webp"],
-  [/(?:^|\\b)dart(?:s)?(?:\\b|$)/i, "icons/weapons/ammunition/arrow-broadhead.webp"],
-  [/(?:^|\\b)net(?:\\b|$)/i, "icons/tools/fishing/net.webp"]
+const BY_NAME = [
+  [/\bbite\b/i, "icons/creatures/abilities/mouth-teeth-rows-red.webp"],
+  [/\bclaws?\b/i, "icons/creatures/claws/claw-talons-yellow-red.webp"],
+  [/\btalons?\b/i, "icons/commodities/claws/claw-bird-pink.webp"],
+  [/\btail\b/i, "icons/creatures/abilities/tail-swipe-green.webp"],
+  [/\btentacles?\b/i, "icons/creatures/tentacles/tentacles-octopus-black-pink.webp"],
+  [/\bslam\b|\bfist\b|\bunarmed\b/i, "icons/skills/melee/unarmed-punch-fist-yellow-red.webp"],
+  [/\bgore\b|\bhorns?\b|\btusks?\b/i, "icons/skills/wounds/bone-broken-tooth-fang-red.webp"],
+  [/\bsting(?:er)?\b/i, "icons/creatures/abilities/stinger-poison-green.webp"],
+  [/\bhooves\b|\bstomp\b|\btrample\b/i, "icons/commodities/bones/hooves-cloven-brown.webp"],
+  [/\bbeak\b|\bpeck\b/i, "icons/commodities/bones/beak-hooked-red.webp"],
+  [/\brend\b/i, "icons/skills/melee/shield-damaged-broken-orange.webp"],
+  [/\bmultiattack\b/i, "icons/skills/melee/strike-weapons-orange.webp"],
+  [/\bfire breath\b/i, "icons/creatures/abilities/dragon-fire-breath-orange.webp"],
+  [/\b(?:cold|frost|ice) breath\b/i, "icons/creatures/abilities/dragon-ice-breath-blue.webp"],
+  [/\blightning breath\b/i, "icons/magic/lightning/bolt-strike-blue.webp"],
+  [/\bacid breath\b/i, "icons/magic/acid/projectile-stream-bubbles.webp"],
+  [/\bpoison breath\b/i, "icons/magic/light/beam-rays-green-large.webp"],
+  [/\bbreath\b/i, "icons/creatures/reptiles/lizard-mouth-glowing-red.webp"],
+  [/\bfrightful presence\b/i, "icons/creatures/reptiles/dragon-horned-blue.webp"],
+  [/\blegendary resistance\b/i, "icons/equipment/shield/heater-steel-crystal-red.webp"],
+  [/\bspellcasting\b/i, "icons/magic/symbols/circled-gem-pink.webp"],
+  [/\bpack tactics\b/i, "icons/creatures/abilities/wolf-heads-swirl-purple.webp"],
+  [/\bkeen (?:senses|sight|hearing)\b/i, "icons/creatures/eyes/human-single-blue.webp"],
+  [/\bkeen smell\b/i, "icons/creatures/mammals/wolf-howl-moon-forest-blue.webp"],
+  [/\bamphibious\b|\bwater breathing\b|\bhold breath\b/i, "icons/creatures/amphibians/bullfrog-glass-teal.webp"],
+  [/\bmagic resistance\b/i, "icons/magic/light/orbs-hand-gray.webp"],
+  [/\bweb\b/i, "icons/creatures/webs/web-spider-casting-caught-purple.webp"],
+  [/\bspider climb\b/i, "icons/creatures/invertebrates/spider-pink-purple.webp"],
+  [/\bparry\b/i, "icons/skills/melee/swords-parry-block-blue.webp"],
+  [/\bcharge\b/i, "icons/creatures/mammals/bull-horns-eyes-glowin-orange.webp"],
+  [/\bpounce\b|\bleap\b/i, "icons/skills/movement/arrow-upward-yellow.webp"],
+  [/\bswallow\b/i, "icons/creatures/abilities/mouth-teeth-rows-needles-purple.webp"],
+  [/\bconstrict\b|\bgrapple\b|\bentangle\b/i, "icons/magic/nature/root-vine-entangled-hands.webp"],
+  [/\bengulf\b/i, "icons/creatures/slimes/slime-face-skull-green.webp"],
+  [/\bincorporeal\b/i, "icons/creatures/magical/spirit-undead-ghost-purple.webp"],
+  [/\bsunlight\b/i, "icons/magic/light/beam-rays-yellow.webp"],
+  [/\bregeneration\b/i, "icons/skills/wounds/anatomy-organ-heart-red.webp"],
+  [/\bflyby\b|\bwing\b/i, "icons/creatures/abilities/wings-birdlike-blue.webp"],
+  [/\becholocation\b/i, "icons/magic/sonic/projectile-sound-rings-wave.webp"],
+  [/\bteleport\b|\bmisty step\b|\bblink\b/i, "icons/magic/symbols/ring-circle-smoke-blue.webp"],
+  [/\bshapechange\b|\bshape-?shift/i, "icons/magic/unholy/hand-fire-skeleton-pink.webp"],
+  [/\blife drain\b|\bdrain\b/i, "icons/skills/wounds/injury-pain-body-orange.webp"],
+  [/\bdaggers?\b/i, "icons/weapons/daggers/dagger-straight-blue.webp"],
+  [/\bgreatswords?\b/i, "icons/weapons/swords/greatsword-crossguard-steel.webp"],
+  [/\blongswords?\b/i, "icons/weapons/swords/greatsword-guard.webp"],
+  [/\bshortswords?\b/i, "icons/weapons/swords/sword-guard-worn-purple.webp"],
+  [/\bscimitars?\b/i, "icons/weapons/swords/scimitar-worn-blue.webp"],
+  [/\brapiers?\b/i, "icons/weapons/swords/sword-guard-bronze.webp"],
+  [/\bgreataxes?\b/i, "icons/weapons/axes/axe-double.webp"],
+  [/\b(?:hand|battle)?axes?\b/i, "icons/weapons/axes/axe-broad-black.webp"],
+  [/\bjavelins?\b/i, "icons/weapons/polearms/javelin-flared.webp"],
+  [/\bspears?\b|\bpikes?\b|\bharpoons?\b/i, "icons/weapons/polearms/spear-flared-green.webp"],
+  [/\btridents?\b/i, "icons/weapons/polearms/trident-silver-blue.webp"],
+  [/\bmaces?\b/i, "icons/weapons/maces/mace-flanged-steel.webp"],
+  [/\bmorningstars?\b/i, "icons/weapons/maces/mace-round-spiked-black.webp"],
+  [/\bflails?\b/i, "icons/weapons/maces/flail-ball-grey.webp"],
+  [/\bwarhammers?\b|\bmauls?\b|\bhammers?\b/i, "icons/weapons/hammers/hammer-drilling-spiked.webp"],
+  [/\bclubs?\b|\bgreatclubs?\b/i, "icons/weapons/clubs/club-simple-barbed.webp"],
+  [/\b(?:quarter)?staff\b/i, "icons/weapons/staves/staff-simple.webp"],
+  [/\bwhips?\b/i, "icons/weapons/misc/whip-red-yellow.webp"],
+  [/\bheavy crossbow\b/i, "icons/weapons/crossbows/crossbow-loaded-black.webp"],
+  [/\bcrossbows?\b/i, "icons/weapons/crossbows/crossbow-simple-brown.webp"],
+  [/\blongbows?\b/i, "icons/weapons/bows/longbow-recurve-leather-brown.webp"],
+  [/\b(?:short)?bows?\b/i, "icons/weapons/bows/shortbow-leather.webp"],
+  [/\bslings?\b/i, "icons/weapons/slings/slingshot-wood.webp"],
+  [/\bnets?\b/i, "icons/tools/fishing/net-simple-brown.webp"]
 ];
 
-function sb5eCoreIcon(name, type, document) {
-  const n = String(name || "").trim();
-  const t = String(type || "").toLowerCase();
+/** Fallbacks by what the feature is, using dnd5e's own activity icons. */
+const BY_KIND = {
+  attack: "systems/dnd5e/icons/svg/activity/attack.svg",
+  save: "systems/dnd5e/icons/svg/activity/save.svg",
+  heal: "systems/dnd5e/icons/svg/activity/heal.svg",
+  cast: "systems/dnd5e/icons/svg/activity/cast.svg",
+  feature: "systems/dnd5e/icons/svg/monster.svg"
+};
 
-  if (t === "weapon" || t === "spell" || t === "equipment" || t === "consumable" || t === "tool" || t === "feat") {
-    const weaponMatch = SB5E_WEAPON_ICONS.find(([re]) => re.test(n));
-    if (weaponMatch) return weaponMatch[1];
-  }
-
-  if (/^shield$/i.test(n) || /shield/i.test(n) && t === "equipment") return SB5E_ICON_DEFAULTS.shield;
-  if (/(?:plate|chain mail|chainmail|scale mail|breastplate|half plate|leather armor|hide armor|padded armor|studded leather|splint)/i.test(n)) return SB5E_ICON_DEFAULTS.armor;
-  if (/(?:potion|elixir|draught)/i.test(n)) return SB5E_ICON_DEFAULTS.consumable;
-  if (t === "spell") return SB5E_ICON_DEFAULTS.spell;
-  if (t === "feat") {
-    if (/lair action/i.test(n)) return SB5E_ICON_DEFAULTS.lair;
-    if (/legendary action/i.test(n)) return SB5E_ICON_DEFAULTS.legendary;
-    if (/reaction/i.test(n)) return SB5E_ICON_DEFAULTS.reaction;
-    if (/bonus action/i.test(n)) return SB5E_ICON_DEFAULTS.bonus;
-    if (/trait/i.test(n)) return SB5E_ICON_DEFAULTS.trait;
-    return SB5E_ICON_DEFAULTS.action;
-  }
-  if (t === "race") return SB5E_ICON_DEFAULTS.race;
-  if (t === "class" || t === "subclass") return SB5E_ICON_DEFAULTS[t];
-  if (t === "tool") return SB5E_ICON_DEFAULTS.tool;
-  return null;
+export function iconFor(name, kind = "feature") {
+  for (const [re, path] of BY_NAME) if (re.test(name)) return path;
+  return BY_KIND[kind] ?? BY_KIND.feature;
 }
-
-function sb5eIsDefaultImage(document) {
-  const img = String(document?.img || "");
-  return !img || img === "icons/svg/item-bag.svg" || img === "icons/svg/mystery-man.svg" || img === "icons/svg/book.svg" || img === "icons/svg/d20-black.svg";
-}
-
-Hooks.on("createItem", async item => {
-  try {
-    if (!item || !sb5eIsDefaultImage(item)) return;
-    const icon = sb5eCoreIcon(item.name, item.type, item);
-    if (!icon) return;
-    await item.update({img: icon}, {render: false});
-  } catch (error) {
-    console.warn("Statblock 5e | Could not assign automatic item icon", error);
-  }
-});
-
-Hooks.on("createActor", async actor => {
-  try {
-    if (!actor || !sb5eIsDefaultImage(actor)) return;
-    if (actor.type !== "npc") return;
-    await actor.update({img: "icons/creatures/undead/zombie-rotting.webp"}, {render: false});
-  } catch (error) {
-    console.warn("Statblock 5e | Could not assign automatic NPC icon", error);
-  }
-});
