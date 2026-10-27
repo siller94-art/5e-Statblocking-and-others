@@ -41,12 +41,12 @@ export const SPLIT = "\u0000SPLIT";
 
 function titled(name) {
   const words = name.trim().split(/\s+/);
-  return words.every((w, i) => /^[A-Z0-9(]/.test(w) || (i > 0 && SMALL_WORDS.has(w.toLowerCase())));
+  return words.every((w, i) => /^[A-Z0-9(+]/.test(w) || (i > 0 && SMALL_WORDS.has(w.toLowerCase())));
 }
 
 /** "Fire Breath (Recharge 5-6). Text…" → { name, paren, text } */
 export function entryStart(line, { strict = false } = {}) {
-  const m = String(line ?? "").match(/^([A-Z][\w'’\-/]*(?:[ ][\w'’\-/]+){0,7}?)\s*(\([^)]{1,80}\))?\s*\.\s+(\S.*)$/);
+  const m = String(line ?? "").match(/^([A-Z][\w'’\-/]*(?:[ ][\w'’\-/+]+){0,7}?)\s*(\([^)]{1,80}\))?\s*\.\s+(\S.*)$/);
   if (!m) return null;
   const name = m[1].trim();
   if (new RegExp(`${STAT_LABEL.source}$`, "i").test(name)) return null;
@@ -394,7 +394,7 @@ function parseStatblock(lines, { rules: rulesOpt = "auto" } = {}) {
       e.cr = parseCR(val);
       const xp = val.match(/(?:xp\s*)?([\d,]+)\s*xp|xp\s*([\d,]+)/i);
       if (xp) e.xp = Number((xp[1] ?? xp[2]).replace(/,/g, ""));
-      const pb = val.match(/pb\s*\+?(\d+)/i);
+      const pb = val.match(/(?:\bpb|proficiency bonus)\s*:?\s*\+?(\d+)/i);
       if (pb) e.pb = Number(pb[1]);
       if (label === "cr") rules2024++; else rules2014++;
       if (e.cr != null) found.push(`CR ${val.match(/\d+\s*\/\s*\d+|\d+(?:\.\d+)?/)?.[0].replace(/\s+/g, "")}`);

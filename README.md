@@ -42,15 +42,21 @@ Everything is built the way the official dnd5e monsters are, so it works with th
 - **Statistics:** size, type and subtype, swarms, alignment, AC (natural armor shown as such), HP and hit dice formula,
   initiative, all speeds and hover, ability scores, saving throw and skill proficiencies (expertise included),
   damage vulnerabilities, resistances and immunities (including "from nonmagical attacks"), condition immunities,
-  senses, languages and telepathy, and CR.
+  senses, languages and telepathy, and CR. A printed proficiency bonus that differs from the CR's (homebrew NPCs with
+  class levels) is respected: saves, skills and spell DC still show the printed totals.
 - **Attacks** roll exactly the printed to-hit and damage, including extra damage ("plus 4 (1d8) acid damage"),
   melee-or-ranged weapons, two-handed versatile damage, and conditional damage ("if the attack roll had Advantage")
   as a separate option.
 - **Saving throw effects** (breath weapons, auras, rays) get the printed DC, save, damage, half-on-success and area template.
 - **Recharge 5–6**, **X/Day** and **per rest** features track their uses.
 - **Legendary actions** (with the number per round and costs), **legendary resistance**, and **lair actions**.
-- **Spellcasting** (2014 and 2024, slots and innate/X per day): spells are linked from your compendiums — the dnd5e SRD
-  spells included — with the printed save DC, attack bonus and casting ability. Legendary actions that cast a spell
+- **Weapons and gear** go in the inventory: weapon attacks (Dagger +2, Dagger of Venom, Light Crossbow…) become equipped
+  weapons that still roll the printed numbers, and magic items named in traits (Cloak of Displacement), the Armor Class
+  note (ring of protection) or the 2024 Gear line are added as equipped items. Matching compendium items supply icons
+  and details; their Active Effects are left off because the printed numbers already include them.
+- **Spellcasting** (2014 and 2024, slots and innate/X per day): spells are copied from your compendiums — the dnd5e SRD
+  spells included — onto the actor, so they sit under Cantrips, 1st Level, 2nd Level… with the printed slot counts,
+  save DC and attack bonus. At-will and X/Day spells go to their own sections with tracked uses. Legendary actions that cast a spell
   ("uses Spellcasting to cast Command") link the spell too. Spells that can't be found are listed after import.
 - Traits and actions get matching Foundry icons, and the original statblock text is kept in the biography.
 

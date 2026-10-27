@@ -1,8 +1,9 @@
 /**
  * Builds dnd5e 6 NPC actors from parsed statblocks and writes them to the world or a compendium.
  * Follows the structure of the official dnd5e monsters: features are "monster" feats with activities,
- * recharge and X/Day features use item uses, legendary actions spend resources.legact, and spellcasting
- * is a feat whose Cast activities link spells from your compendiums.
+ * recharge and X/Day features use item uses, legendary actions spend resources.legact. Listed spells are
+ * copied from your compendiums onto the actor at their own level (cantrips, 1st level…), innate and at-will
+ * spells go to their own sections, and weapons and gear named in the statblock land in the inventory.
  */
 
 import { ABILITIES } from "./parser.js";
@@ -184,6 +185,86 @@ function castActivity(en, sc, spell, uuid, group) {
 /*  Items                                       */
 /* -------------------------------------------- */
 
+const ITEM_TYPES = new Set(["weapon", "equipment", "consumable", "tool", "loot", "container"]);
+
+/** Map of item name → { uuid, type }, preferring the edition's SRD equipment, then the world, then other compendiums. */
+export async function buildItemIndex(rules) {
+  const map = new Map();
+  const add = (name, type, uuid) => { const k = normName(name); if (!map.has(k)) map.set(k, { uuid, type }); };
+  const preferred = rules === "2014" ? ["dnd5e.items", "dnd5e.equipment24"] : ["dnd5e.equipment24", "dnd5e.items"];
+  const indexPack = async pack => {
+    const index = await pack.getIndex({ fields: ["type"] });
+    for (const e of index) if (ITEM_TYPES.has(e.type)) add(e.name, e.type, e.uuid ?? `Compendium.${pack.collection}.Item.${e._id}`);
+  };
+  for (const c of preferred) { const pack = game.packs.get(c); if (pack) await indexPack(pack); }
+  for (const i of game.items.filter(i => ITEM_TYPES.has(i.type))) add(i.name, i.type, i.uuid);
+  for (const pack of game.packs.filter(p => p.documentName === "Item" && !preferred.includes(p.collection))) await indexPack(pack);
+  return map;
+}
+
+const WEAPON_RE = /\b(dagger|club|greatclub|handaxe|javelin|light hammer|mace|quarterstaff|staff|sickle|spear|crossbow|dart|shortbow|sling|battleaxe|flail|glaive|greataxe|greatsword|halberd|lance|longsword|maul|morningstar|pike|rapier|scimitar|shortsword|trident|war pick|warhammer|whip|blowgun|longbow|musket|pistol|sword|axe)s?\b/i;
+const MAGIC_ITEM_RE = /^(cloak|ring|amulet|boots|bracers|gloves|gauntlets|belt|helm|circlet|robe|mantle|cape|headband|periapt|necklace|brooch|medallion|wand|rod|orb|ioun stone|bag|stone|talisman|crown|mask|goggles|eyes|slippers|wings|staff|shield|armor|plate|potion|elixir|tome|manual|horn|figurine|lantern|mirror|censer|bowl|brazier|cube|carpet|broom|sphere|scarab|ioun)\b.*\bof\b/i;
+const ARMOR = [[/\b(padded|leather|studded)\b/i, "light"], [/\b(hide|chain shirt|scale|breastplate|half plate)\b/i, "medium"], [/\b(ring mail|chain mail|splint|plate)\b/i, "heavy"], [/\bshield\b/i, "shield"]];
+const titleCase = s => String(s).trim().replace(/\b([a-z])(\w*)/g, (m, a, b, i) => (i > 0 && SMALL.has(m) ? m : a.toUpperCase() + b));
+const SMALL = new Set(["of", "the", "and", "a", "an", "in", "on", "with"]);
+
+/** "Dagger +2" → { hit for "Dagger", bonus 2 }; "Dagger of Venom" → exact hit. */
+function findItem(index, name, types) {
+  const n = normName(name);
+  const bonus = Number(n.match(/(?:^|\s)\+(\d)\b/)?.[1] ?? 0);
+  const bases = [n, n.replace(/\s*\(.*\)$/, ""), n.replace(/\s*,?\s*\+\d\b/g, "").replace(/\s*\(.*\)$/, "").trim()];
+  for (const b of bases) {
+    const hit = index?.get(b);
+    if (hit && (!types || types.includes(hit.type))) return { ...hit, bonus, exact: b === n };
+  }
+  return { uuid: null, type: null, bonus, exact: false };
+}
+
+function equipmentType(name) {
+  for (const [re, t] of ARMOR) if (re.test(name)) return t;
+  if (/^ring\b/i.test(name)) return "ring";
+  if (/^(cloak|robe|mantle|cape|boots|gloves|bracers|belt|slippers)\b/i.test(name)) return "clothing";
+  return /\bof\b/i.test(name) ? "wondrous" : "trinket";
+}
+
+function weaponItem(en, ctx, feat, hit) {
+  const ranged = en.attack.type === "ranged";
+  const props = hit.bonus ? ["mgc"] : [];
+  const data = {
+    name: en.name, type: "weapon", img: feat.img,
+    system: {
+      description: feat.system.description, identifier: feat.system.identifier, source: ctx.source,
+      type: { value: ranged ? "simpleR" : "simpleM", baseItem: "" }, properties: props,
+      quantity: 1, equipped: true, proficient: 1, magicalBonus: null,
+      uses: feat.system.uses, activities: feat.system.activities
+    },
+    flags: feat.flags
+  };
+  if (!hit.uuid) return { data };
+  const overlay = { name: en.name, system: { description: feat.system.description, quantity: 1, equipped: true, proficient: 1, magicalBonus: null, uses: feat.system.uses, activities: feat.system.activities }, flags: feat.flags };
+  return { ref: hit.uuid, overlay, data, addProps: props, replaceActivities: true, kind: "weapon" };
+}
+
+function gearItem(name, ctx, { text = "", activities = {}, uses = null, section = "gear" } = {}) {
+  const hit = findItem(ctx.items, name, ["equipment", "consumable", "loot", "container", "tool", "weapon"]);
+  const nice = /[A-Z]/.test(name) ? name : titleCase(name);
+  const data = {
+    name: nice, type: "equipment", img: "icons/svg/item-bag.svg",
+    system: {
+      description: { value: text ? paragraphs(text) : "", chat: "" }, identifier: slugify(nice), source: ctx.source,
+      type: { value: equipmentType(nice), baseItem: "" }, quantity: 1, equipped: true,
+      ...(uses ? { uses } : {}), activities
+    },
+    flags: { [MODULE_ID]: { section } }
+  };
+  if (!hit.uuid) return { data };
+  const overlay = { name: nice, system: { quantity: 1, equipped: true }, flags: data.flags };
+  if (text) overlay.system.description = data.system.description;
+  if (Object.keys(activities).length) overlay.system.activities = activities;
+  if (uses) overlay.system.uses = uses;
+  return { ref: hit.uuid, overlay, data, replaceActivities: !!Object.keys(activities).length, kind: "gear" };
+}
+
 function usesFor(en) {
   const u = en.usage;
   if (!u || u.cost) return { spent: 0, max: "", recovery: [] };
@@ -234,18 +315,34 @@ function featureItem(en, ctx) {
   };
 }
 
-function spellcastingItem(en, ctx) {
+/**
+ * Spells go straight onto the actor (not through Cast activities, which dnd5e files under "Additional Spells").
+ * Slot spells and cantrips use the "spell" method so the sheet shows them under their level; at-will and
+ * X/Day spells use the "atwill" and "innate" methods. The printed DC and attack come from actor bonuses.
+ */
+function spellRefs(en, ctx) {
   const sc = en.spellcasting;
-  const activities = [];
   const missing = [];
+  const seen = new Set();
   for (const g of sc.groups) {
     for (const spell of g.spells) {
       const uuid = findSpell(ctx.spells, spell.name);
-      if (uuid) activities.push(castActivity(en, sc, spell, uuid, g));
-      else missing.push(spell.name);
+      if (!uuid) { missing.push(spell.name); continue; }
+      if (seen.has(uuid)) continue;
+      seen.add(uuid);
+      const slotted = g.slots || g.cantrips || (!sc.innate && sc.casterLevel && !g.perDay && !g.level);
+      const method = slotted ? "spell" : g.perDay ? "innate" : "atwill";
+      const overlay = { system: { method, prepared: slotted ? 1 : 0 }, flags: { [MODULE_ID]: { spellcasting: en.name } } };
+      if (g.perDay) overlay.system.uses = { spent: 0, max: String(g.perDay), recovery: [{ period: "day", type: "recoverAll" }] };
+      ctx.refs.push({ ref: uuid, overlay, consumeUses: !!g.perDay, kind: "spell" });
     }
   }
   if (missing.length) ctx.warnings.push(`${en.name}: not found in your compendiums, left as text: ${missing.join(", ")}`);
+}
+
+function spellcastingItem(en, ctx) {
+  spellRefs(en, ctx);
+  const activities = [];
   return {
     name: en.name, type: "feat", img: iconFor("spellcasting", "cast"),
     system: {
@@ -312,12 +409,18 @@ function biography(d) {
  * @param {string} [opts.book]
  * @param {string} [opts.typeOverride]  Creature type to use instead of the statblock's (familiars).
  * @param {Map} opts.spells       Spell index from buildSpellIndex().
+ * @param {Map} [opts.items]      Item index from buildItemIndex().
+ * @returns {{ actor: object, items: { data?: object, ref?: string, overlay?: object }[], warnings: string[] }}
+ *   Items with a `ref` are copied from that compendium entry with `overlay` on top (see resolveItems).
  */
-export function buildActor(d, { kind = "monster", book = "Homebrew", typeOverride = "", spells, ownerId = null }) {
+export function buildActor(d, { kind = "monster", book = "Homebrew", typeOverride = "", spells, items: itemIndex = null, ownerId = null }) {
   const warnings = [];
   const source = { book, page: "", custom: "", license: "", rules: d.rules ?? "2024" };
   const cr = d.cr ?? null;
-  const pb = d.pb ?? profFromCR(cr);
+  // dnd5e works out an NPC's proficiency from its CR; the statblock may print a different one (homebrew, class levels).
+  // Read proficiency levels with the printed bonus, then add bonuses so the sheet shows the printed totals.
+  const sheetPb = profFromCR(cr);
+  const pb = d.pb ?? sheetPb;
 
   // Abilities and saves
   const abilities = {};
@@ -327,9 +430,10 @@ export function buildActor(d, { kind = "monster", book = "Homebrew", typeOverrid
     const total = d.saves?.[k];
     if (total != null) {
       const base = mod(score);
-      if (total === base + pb) a.proficient = 1;
-      else if (total > base) { a.proficient = 1; a.bonuses = { save: signed(total - base - pb), check: "" }; }
-      else if (total !== base) a.bonuses = { save: signed(total - base), check: "" };
+      const prof = total - base >= Math.ceil(pb * 0.75) ? 1 : 0;
+      a.proficient = prof;
+      const extra = total - base - prof * sheetPb;
+      if (extra) a.bonuses = { save: signed(extra), check: "" };
     }
     abilities[k] = a;
   }
@@ -340,11 +444,8 @@ export function buildActor(d, { kind = "monster", book = "Homebrew", typeOverrid
   for (const [k, total] of Object.entries(d.skills ?? {})) {
     const base = mod(abilities[SKILL_ABILITY[k]].value);
     const steps = (total - base) / pb;
-    let value = 1, bonus = 0;
-    if (steps >= 1.75) { value = 2; bonus = total - base - 2 * pb; }
-    else if (steps >= 0.75) { value = 1; bonus = total - base - pb; }
-    else if (steps >= 0.25) { value = 0.5; bonus = total - base - Math.floor(pb / 2); }
-    else { value = 0; bonus = total - base; }
+    const value = steps >= 1.75 ? 2 : steps >= 0.75 ? 1 : steps >= 0.25 ? 0.5 : 0;
+    const bonus = total - base - (value === 0.5 ? Math.floor(sheetPb / 2) : value * sheetPb);
     skills[k] = { value, ability: SKILL_ABILITY[k], bonuses: { check: bonus ? signed(bonus) : "", passive: "" } };
   }
 
@@ -363,7 +464,7 @@ export function buildActor(d, { kind = "monster", book = "Homebrew", typeOverrid
     attributes: {
       ac,
       hp: { value: d.hp ?? 1, max: d.hp ?? 1, formula: d.hpFormula ?? "" },
-      init: { ability: "", bonus: initBonus(d.init, mod(abilities.dex.value), pb) },
+      init: { ability: "", bonus: initBonus(d.init, mod(abilities.dex.value), sheetPb) },
       movement,
       senses: { ranges: { darkvision: null, blindsight: null, tremorsense: null, truesight: null, ...(d.senses?.ranges ?? {}) }, units: "ft", special: d.senses?.special ?? "" },
       spellcasting: sc?.ability ?? "",
@@ -388,13 +489,55 @@ export function buildActor(d, { kind = "monster", book = "Homebrew", typeOverrid
     source
   };
 
-  // Items
-  const ctx = { source, spells, warnings, spellcasting: sc };
+  // Printed spell save DC and spell attack, on top of what dnd5e works out from CR and the casting ability.
+  if (sc) {
+    const castMod = sc.ability ? mod(abilities[sc.ability]?.value) : 0;
+    const dcExtra = sc.dc != null ? sc.dc - (8 + sheetPb + castMod) : 0;
+    const atkExtra = sc.attack != null ? sc.attack - (sheetPb + castMod) : sc.dc != null ? dcExtra : 0;
+    system.bonuses = {
+      spell: { dc: dcExtra ? signed(dcExtra) : "" },
+      msak: { attack: atkExtra ? signed(atkExtra) : "", damage: "" },
+      rsak: { attack: atkExtra ? signed(atkExtra) : "", damage: "" }
+    };
+  }
+  // Explicit slot counts ("1st level (4 slots)") win over the caster-level table.
+  const slots = {};
+  for (const s of d.spellcasting ?? []) for (const g of s.groups) if (g.slots && g.level) slots[`spell${g.level}`] = { value: g.slots, override: g.slots };
+  if (Object.keys(slots).length) system.spells = slots;
+
+  // Items: features, then spells and gear copied from compendiums (resolved in importStatblocks)
+  const ctx = { source, spells, items: itemIndex, warnings, spellcasting: sc, refs: [] };
   const items = [];
+  const gearNames = new Set();
+  const addGear = g => { const k = normName(g.overlay?.name ?? g.data.name); if (gearNames.has(k)) return; gearNames.add(k); items.push(g); };
   for (const en of d.entries ?? []) {
-    try { items.push(en.spellcasting ? spellcastingItem(en, ctx) : featureItem(en, ctx)); }
+    try {
+      if (en.spellcasting) { items.push({ data: spellcastingItem(en, ctx) }); continue; }
+      const feat = featureItem(en, ctx);
+      if (en.attack && !en.attack.spell) {
+        const hit = findItem(itemIndex, en.name, ["weapon"]);
+        if (hit.uuid || WEAPON_RE.test(en.name)) { addGear(weaponItem(en, ctx, feat, hit)); continue; }
+      }
+      if (en.section === "trait" && (MAGIC_ITEM_RE.test(en.name) || (findItem(itemIndex, en.name, ["equipment", "consumable"]).exact && /\s/.test(en.name)))) {
+        addGear(gearItem(en.name, ctx, { text: en.text, activities: feat.system.activities, uses: feat.system.uses?.max ? feat.system.uses : null, section: en.section }));
+        continue;
+      }
+      items.push({ data: feat });
+    }
     catch (err) { warnings.push(`${en.name}: ${err.message}`); }
   }
+  // Gear named outside the actions: the Armor Class note ("ring of protection") and the 2024 Gear line.
+  const acGear = String(d.acNote ?? "").split(/,|;|\band\b/i).map(s => s.trim())
+    .filter(s => s && /[a-z]/i.test(s) && !/natural|unarmored|mage armor|barkskin|^armor$|dex|\bwith\b|\bspell\b|^\d+$/i.test(s));
+  for (const g of [...acGear, ...(d.gear ?? [])]) {
+    const name = g.replace(/\s*\(\d+\)$/, "").trim();
+    const qty = Number(g.match(/\((\d+)\)$/)?.[1] ?? 1);
+    if ([...gearNames].some(k => k === normName(name) || k.replace(/\s*\+\d\b/, "") === normName(name))) continue;
+    const item = gearItem(name, ctx);
+    if (qty > 1) { (item.overlay ?? item.data).system ??= {}; (item.overlay ?? item.data).system.quantity = qty; if (item.overlay) item.data.system.quantity = qty; }
+    addGear(item);
+  }
+  items.push(...ctx.refs);
 
   const k = KINDS[kind] ?? KINDS.monster;
   const size = TOKEN_SIZE[system.traits.size] ?? 1;
@@ -422,6 +565,34 @@ export function buildActor(d, { kind = "monster", book = "Homebrew", typeOverrid
 /* -------------------------------------------- */
 /*  Writing                                     */
 /* -------------------------------------------- */
+
+/** Turn built item entries into item data, copying spells and gear from their compendium entries. */
+export async function resolveItems(entries, warnings = []) {
+  const out = [];
+  for (const en of entries) {
+    if (!en.ref) { out.push(en.data); continue; }
+    let doc = null;
+    try { doc = await fromUuid(en.ref); } catch (err) { /* fall through */ }
+    if (!doc) { if (en.data) out.push(en.data); else warnings.push(`Couldn't load ${en.ref}`); continue; }
+    const base = doc.toObject();
+    for (const k of ["_id", "folder", "sort", "ownership"]) delete base[k];
+    // Magic item effects (Ring of Protection's +1 AC and saves…) are already in the printed numbers.
+    if (en.kind !== "spell") base.effects = [];
+    const merged = foundry.utils.mergeObject(base, en.overlay ?? {}, { inplace: false });
+    if (en.replaceActivities) merged.system.activities = en.overlay.system.activities;
+    if (en.addProps?.length) merged.system.properties = [...new Set([...(merged.system.properties ?? []), ...en.addProps])];
+    if (en.consumeUses) {
+      for (const a of Object.values(merged.system.activities ?? {})) {
+        a.consumption ??= { targets: [], scaling: { allowed: false, max: "" } };
+        a.consumption.targets = [...(a.consumption.targets ?? []).filter(t => t.type !== "itemUses"), { type: "itemUses", target: "", value: "1", scaling: {} }];
+        a.consumption.spellSlot = false;
+      }
+    }
+    merged._stats = { compendiumSource: doc.uuid };
+    out.push(merged);
+  }
+  return out;
+}
 
 async function ensureFolder(name, pack) {
   const folders = pack ? pack.folders.contents : game.folders.filter(f => f.type === "Actor");
@@ -455,6 +626,7 @@ export async function importStatblocks(statblocks, opts = {}) {
 
   const report = { created: 0, updated: 0, skipped: 0, errors: [], warnings: [], actors: [] };
   const spellCache = {};
+  const itemCache = {};
   const folderName = KINDS[kind]?.folder ?? "Monsters";
   let folderId = null;
 
@@ -462,7 +634,9 @@ export async function importStatblocks(statblocks, opts = {}) {
     try {
       const rules = d.rules ?? "2024";
       spellCache[rules] ??= await buildSpellIndex(rules);
-      const { actor: data, items, warnings } = buildActor(d, { kind, book, spells: spellCache[rules], ownerId, typeOverride });
+      itemCache[rules] ??= await buildItemIndex(rules);
+      const { actor: data, items: built, warnings } = buildActor(d, { kind, book, spells: spellCache[rules], items: itemCache[rules], ownerId, typeOverride });
+      const items = await resolveItems(built, warnings);
       report.warnings.push(...warnings.map(w => `${d.name}: ${w}`));
 
       const key = data.flags[MODULE_ID].key;
