@@ -1,8 +1,8 @@
 {
   "id": "statblock-5e",
   "title": "Statblock 5e",
-  "description": "Paste monster, NPC and familiar statblocks straight from a PDF, D&D Beyond, a website or Homebrewery, check what was read, and import them as ready-to-play dnd5e NPC actors with working attacks, saves, recharges, legendary actions and spellcasting. Reads 2014 and 2024 layouts.",
-  "version": "5.1.0",
+  "description": "Paste monster, NPC and familiar statblocks straight from a PDF, D&D Beyond, a website or Homebrewery, check what was read, and upload PDF or JSON files, add portrait and token art, and import them as ready-to-play dnd5e NPC actors with working attacks, saves, recharges, legendary actions and spellcasting. Reads 2014 and 2024 layouts.",
+  "version": "5.2.0",
   "authors": [{ "name": "siller94-art" }],
   "url": "https://github.com/siller94-art/5e-Statblocking-and-others",
   "manifest": "https://raw.githubusercontent.com/siller94-art/5e-Statblocking-and-others/main/module.json",

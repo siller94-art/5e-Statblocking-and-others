@@ -545,10 +545,11 @@ export function buildActor(d, { kind = "monster", book = "Homebrew", typeOverrid
   const actor = {
     name: d.name,
     type: "npc",
-    img: "icons/svg/mystery-man.svg",
+    img: d.img || "icons/svg/mystery-man.svg",
     system,
     prototypeToken: {
       name: d.name,
+      ...(d.token || d.img ? { texture: { src: d.token || d.img } } : {}),
       width: size, height: size,
       disposition: k.disposition,
       actorLink: k.actorLink,
@@ -594,6 +595,51 @@ export async function resolveItems(entries, warnings = []) {
   return out;
 }
 
+/** On re-import, keep art set by hand on the old actor unless new art was chosen. */
+function keepArt(prior, data, d) {
+  const custom = p => p && !p.startsWith("icons/svg/");
+  const out = {};
+  const priorToken = prior.prototypeToken?.texture?.src;
+  if (!d.img && custom(prior.img)) out.img = prior.img;
+  if (!d.token && !d.img && custom(priorToken)) {
+    data.prototypeToken = { ...data.prototypeToken, texture: { ...(data.prototypeToken.texture ?? {}), src: priorToken } };
+  }
+  return out;
+}
+
+/** Import an actor from a Foundry JSON export as it is, with the chosen art, folder and token settings. */
+async function importFoundryActor(d, { pack, kind, update, ownerId, folderName, getFolder }) {
+  const k = KINDS[kind] ?? KINDS.monster;
+  const data = foundry.utils.deepClone(d.foundry);
+  for (const key of ["_id", "folder", "sort", "_stats", "ownership"]) delete data[key];
+  for (const item of data.items ?? []) delete item.folder;
+  data.flags = foundry.utils.mergeObject(data.flags ?? {}, { [MODULE_ID]: { kind, key: `${slugify(data.name)}:foundry` } });
+  data.prototypeToken = foundry.utils.mergeObject(data.prototypeToken ?? {}, { name: data.prototypeToken?.name || data.name, disposition: k.disposition, actorLink: k.actorLink });
+  if (d.img) data.img = d.img;
+  if (d.token || d.img) data.prototypeToken.texture = { ...(data.prototypeToken.texture ?? {}), src: d.token || d.img };
+  if (kind === "familiar" && ownerId) data.ownership = { default: 0, [ownerId]: 3 };
+
+  const key = data.flags[MODULE_ID].key;
+  const pool = pack ? await pack.getDocuments() : game.actors.contents;
+  const prior = pool.find(a => a.getFlag(MODULE_ID, "key") === key && a.getFlag(MODULE_ID, "kind") === kind);
+  if (prior && !update) return { skipped: true };
+  const folder = pack ? await ensureFolder(folderName, pack) : (prior?.folder?.id ?? await getFolder());
+  if (prior && !d.img && prior.img && !prior.img.startsWith("icons/svg/")) data.img = prior.img;
+  if (prior && !pack) {
+    // Replace in place so tokens already placed on scenes keep pointing at this actor.
+    const { items = [], effects = [], ...rest } = data;
+    await prior.deleteEmbeddedDocuments("Item", prior.items.map(i => i.id));
+    await prior.deleteEmbeddedDocuments("ActiveEffect", prior.effects.map(e => e.id));
+    await prior.update({ ...rest, folder }, { recursive: false, diff: false });
+    if (items.length) await prior.createEmbeddedDocuments("Item", items.map(i => { const { _id, ...x } = i; return x; }));
+    if (effects.length) await prior.createEmbeddedDocuments("ActiveEffect", effects.map(e => { const { _id, ...x } = e; return x; }));
+    return { actor: prior, updated: true };
+  }
+  if (prior) await prior.delete();
+  const actor = await Actor.implementation.create({ ...data, folder }, pack ? { pack: pack.collection } : {});
+  return { actor, updated: !!prior };
+}
+
 async function ensureFolder(name, pack) {
   const folders = pack ? pack.folders.contents : game.folders.filter(f => f.type === "Actor");
   const hit = folders.find(f => f.name === name && !f.folder);
@@ -612,6 +658,9 @@ async function ensureFolder(name, pack) {
  * @param {string} [opts.ownerId]       Familiars: the player who should own it.
  * @param {string} [opts.typeOverride]  Familiars: celestial, fey or fiend instead of beast.
  * @param {boolean} [opts.openSheet=true]
+ *
+ * Each statblock may carry `img` (portrait) and `token` (token art; defaults to the portrait).
+ * A statblock of the form `{ foundry: actorData }` is a Foundry actor export, imported as it is.
  */
 export async function importStatblocks(statblocks, opts = {}) {
   const { target = "world", kind = "monster", update = true, book = "Homebrew", ownerId = null, typeOverride = "", openSheet = true } = opts;
@@ -632,6 +681,13 @@ export async function importStatblocks(statblocks, opts = {}) {
 
   for (const d of statblocks) {
     try {
+      if (d.foundry) {
+        const done = await importFoundryActor(d, { pack, kind, update, ownerId, folderName, getFolder: async () => (folderId ??= await ensureFolder(folderName, null)) });
+        if (done.skipped) { report.skipped++; continue; }
+        report[done.updated ? "updated" : "created"]++;
+        report.actors.push(done.actor);
+        continue;
+      }
       const rules = d.rules ?? "2024";
       spellCache[rules] ??= await buildSpellIndex(rules);
       itemCache[rules] ??= await buildItemIndex(rules);
@@ -649,8 +705,7 @@ export async function importStatblocks(statblocks, opts = {}) {
       let actor;
       if (prior && !pack) {
         await prior.deleteEmbeddedDocuments("Item", prior.items.map(i => i.id));
-        const keepImg = prior.img && !prior.img.startsWith("icons/svg/") ? { img: prior.img, "prototypeToken.texture.src": prior.prototypeToken.texture.src } : {};
-        await prior.update({ ...data, ...keepImg, folder: prior.folder?.id ?? folderId }, { recursive: false, diff: false });
+        await prior.update({ ...data, ...keepArt(prior, data, d), folder: prior.folder?.id ?? folderId }, { recursive: false, diff: false });
         actor = prior;
         report.updated++;
       } else {

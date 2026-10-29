@@ -1,20 +1,78 @@
 /**
- * Reads statblock text from dropped or chosen files: TXT, MD, JSON and PDFs with selectable text.
+ * Reads statblocks from dropped or chosen files: PDFs with selectable text, JSON, TXT and MD.
+ *
+ * JSON can be any of:
+ *   - a statblock as a string, or an array of strings
+ *   - { "text": "..." } (also "statblock", "content", "markdown", "body"), optionally with
+ *     "img" / "image" / "portrait" and "token" / "tokenImg" for the creature's art
+ *   - an array or collection of those ({ "statblocks": [...] }, { "monsters": [...] }, ...)
+ *   - a Foundry actor export (right-click an actor → Export Data), or an array of them;
+ *     these are imported as they are, without re-parsing
  */
 
+export const IMAGE_EXT = /\.(png|jpe?g|webp|gif|avif|svg)$/i;
+export const isImageFile = f => f?.type?.startsWith("image/") || IMAGE_EXT.test(f?.name ?? "");
+
+/** Just the statblock text of a file (kept for macros and older callers). */
 export async function readFile(file) {
+  return (await readSource(file)).text;
+}
+
+/**
+ * @returns {Promise<{ text: string, actors: object[], images: Record<string, { img?: string, token?: string }> }>}
+ *   `images` is keyed by lower-case creature name.
+ */
+export async function readSource(file) {
   const name = file.name.toLowerCase();
-  if (name.endsWith(".pdf") || file.type === "application/pdf") return readPdf(file);
+  if (name.endsWith(".pdf") || file.type === "application/pdf") return { text: await readPdf(file), actors: [], images: {} };
   const text = await file.text();
-  if (name.endsWith(".json")) {
-    try {
-      const data = JSON.parse(text);
-      if (typeof data === "string") return data;
-      if (typeof data?.text === "string") return data.text;
-      if (Array.isArray(data) && data.every(x => typeof x === "string")) return data.join("\n---\n");
-    } catch { /* not JSON after all */ }
+  if (name.endsWith(".json") || file.type === "application/json") {
+    let data;
+    try { data = JSON.parse(text); } catch (err) { throw new Error(`${file.name} isn't valid JSON: ${err.message}`); }
+    const out = readJson(data);
+    if (!out.text && !out.actors.length) {
+      throw new Error(`Found no statblocks in ${file.name}. Use statblock text ("text": "..."), a list of statblocks, or a Foundry actor export.`);
+    }
+    return out;
   }
-  return text;
+  return { text, actors: [], images: {} };
+}
+
+const TEXT_KEYS = ["text", "statblock", "statBlock", "content", "markdown", "body", "source"];
+const IMG_KEYS = ["img", "image", "portrait", "art", "artwork"];
+const TOKEN_KEYS = ["token", "tokenImg", "tokenImage", "tokenArt"];
+
+function isFoundryActor(o) {
+  return o && typeof o === "object" && typeof o.name === "string" && typeof o.type === "string" && o.system && typeof o.system === "object";
+}
+
+const firstString = (o, keys) => { for (const k of keys) if (typeof o?.[k] === "string" && o[k].trim()) return o[k].trim(); return ""; };
+
+function readJson(data) {
+  const texts = [];
+  const actors = [];
+  const images = {};
+  const visit = (v, depth = 0) => {
+    if (depth > 6 || v == null) return;
+    if (typeof v === "string") { if (v.trim()) texts.push(v); return; }
+    if (Array.isArray(v)) { v.forEach(x => visit(x, depth + 1)); return; }
+    if (typeof v !== "object") return;
+    if (isFoundryActor(v)) { actors.push(v); return; }
+    const text = firstString(v, TEXT_KEYS);
+    if (text) {
+      texts.push(text);
+      const img = firstString(v, IMG_KEYS);
+      const token = firstString(v, TOKEN_KEYS) || (typeof v.prototypeToken?.texture?.src === "string" ? v.prototypeToken.texture.src : "");
+      // Name the art after the creature: an explicit "name", else the statblock's first line.
+      const key = (typeof v.name === "string" && v.name.trim() ? v.name : text.split("\n").find(l => l.trim()) ?? "").trim().toLowerCase();
+      if (key && (img || token)) images[key] = { ...(img ? { img } : {}), ...(token ? { token } : {}) };
+      return;
+    }
+    // A wrapper such as { "monsters": [...] } or a Foundry folder/adventure export.
+    for (const x of Object.values(v)) if (x && typeof x === "object") visit(x, depth + 1);
+  };
+  visit(data);
+  return { text: texts.join("\n---\n"), actors, images };
 }
 
 async function readPdf(file) {
